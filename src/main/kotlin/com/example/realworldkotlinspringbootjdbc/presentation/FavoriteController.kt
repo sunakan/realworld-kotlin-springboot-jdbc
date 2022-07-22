@@ -24,7 +24,7 @@ class FavoriteController {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             true,
             1,
         )
@@ -44,7 +44,7 @@ class FavoriteController {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             false,
             0,
         )
