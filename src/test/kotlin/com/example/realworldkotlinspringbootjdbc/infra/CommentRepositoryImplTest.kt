@@ -50,7 +50,7 @@ class CommentRepositoryImplTest {
                 "datasets/yml/given/articles.yml"
             ],
         )
-        fun `正常系-articles テーブルに slug に該当する作成済記事（CreatedArtile）が存在した場合、コメント（Comment） の List が戻り値`() {
+        fun `正常系-articles テーブルに slug に該当する作成済記事（CreatedArticle）が存在した場合、コメント（Comment） の List が戻り値`() {
             // given:
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
@@ -164,11 +164,6 @@ class CommentRepositoryImplTest {
             /**
              * given:
              */
-            val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
-            val confirmCommentsSqlParam = MapSqlParameterSource()
-            val beforeCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
-            assertThat(beforeCommentsCount).isEqualTo(0L)
-
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
             /**
@@ -230,12 +225,6 @@ class CommentRepositoryImplTest {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
-        }
-
-        @Test
-        @Disabled
-        fun `異常系-原因不明のため UnexpectedError が戻り値`() {
-            TODO()
         }
     }
 }
