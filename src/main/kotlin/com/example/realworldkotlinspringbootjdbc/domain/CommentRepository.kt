@@ -7,22 +7,15 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface CommentRepository {
-    fun list(slug: Slug): Either<ListUnauthorizedError, List<Comment>> = TODO()
-    sealed interface ListUnauthorizedError : MyError {
-        data class NotFoundArticleBySlug(val slug: Slug) : ListUnauthorizedError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug) :
-            ListUnauthorizedError,
-            MyError.MyErrorWithThrowable
-    }
-
-    fun list(slug: Slug, currentUserId: UserId): Either<ListError, List<Comment>> = TODO()
+    fun list(slug: Slug): Either<ListError, List<Comment>> = TODO()
     sealed interface ListError : MyError {
         data class NotFoundArticleBySlug(val slug: Slug) : ListError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug) : ListError, MyError.MyErrorWithThrowable
     }
 
-    fun create(body: Body): Either<CreateError, Comment> = TODO()
+    fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
     sealed interface CreateError : MyError {
-        data class Unexpected(override val cause: Throwable, val body: Body) : CreateError, MyError.MyErrorWithThrowable
+        data class NotFoundArticleBySlug(val slug: Slug) : CreateError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val slug: Slug, val body: Body, val currentUserId: UserId) : CreateError, MyError.MyErrorWithThrowable
     }
 }
