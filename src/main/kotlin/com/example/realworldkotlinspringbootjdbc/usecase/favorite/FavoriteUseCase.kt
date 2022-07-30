@@ -40,7 +40,7 @@ class FavoriteUseCaseImpl(
              */
             is Valid -> when (val favoriteResult = favoriteRepository.favorite(it.value, currentUser.userId)) {
                 /**
-                 * お気に入り追加 成功
+                 * お気に入り追加 失敗
                  */
                 is Left -> when (favoriteResult.value) {
                     /**
@@ -53,7 +53,7 @@ class FavoriteUseCaseImpl(
                     is FavoriteRepository.FavoriteError.Unexpected -> TODO()
                 }
                 /**
-                 * お気に入り追加 失敗
+                 * お気に入り追加 成功
                  */
                 is Right -> favoriteResult
             }
