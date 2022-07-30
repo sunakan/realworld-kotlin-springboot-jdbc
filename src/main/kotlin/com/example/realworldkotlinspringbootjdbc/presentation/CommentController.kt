@@ -168,7 +168,7 @@ class CommentController(
              */
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
-                when (val createdComment = createCommentUseCase.execute(slug, comment.body)) {
+                when (val createdComment = createCommentUseCase.execute(slug, comment.body, authorizeResult.value)) {
                     /**
                      * コメントの登録に失敗
                      */
@@ -230,7 +230,10 @@ class CommentController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val result = deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId))) {
+                when (
+                    val result =
+                        deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId), authorizeResult.value)
+                ) {
                     /**
                      * コメントの削除に失敗
                      */
@@ -262,6 +265,10 @@ class CommentController(
                         is DeleteCommentUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
+                        )
+                        is DeleteCommentUseCase.Error.DeleteCommentNotAuthorized -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(401)
                         )
                         /**
                          * 原因: 未知のエラー

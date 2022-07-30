@@ -161,7 +161,7 @@ style:
   #
   ReturnCount:
     active: true
-    max: 4 # (default: 2)
+    max: 8 # (default: 2)
     excludedFunctions: 'equals'
     excludeLabeled: false
     excludeReturnFromLambda: true
