@@ -98,5 +98,60 @@ class FavoriteRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml", "datasets/yml/given/tags.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `成功-「articles テーブルに slug に該当する作成済記事が存在」「favorites テーブルにお気に入り登録済」の場合は、お気に入り登録されず（テーブルに変更なし）作成済記事（CreatedArticle）が戻り値`() {
+            /**
+             * given:
+             */
+            val favoriteRepository = FavoriteRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             */
+            val actual = favoriteRepository.favorite(Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"), UserId(2))
+
+            /**
+             * then:
+             */
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = CreatedArticle.newWithoutValidation(
+                id = ArticleId(1),
+                title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = date,
+                updatedAt = date,
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                authorId = UserId(1),
+                favorited = true,
+                favoritesCount = 1
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    assertThat(actual.value.id).isEqualTo(expected.id)
+                    assertThat(actual.value.title).isEqualTo(expected.title)
+                    assertThat(actual.value.slug).isEqualTo(expected.slug)
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.description).isEqualTo(expected.description)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                    assertThat(actual.value.favorited).isEqualTo(expected.favorited)
+                    assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
+                }
+            }
+        }
     }
 }
