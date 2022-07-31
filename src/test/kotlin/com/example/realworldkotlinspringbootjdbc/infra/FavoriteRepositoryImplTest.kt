@@ -4,6 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.FavoriteRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -151,6 +152,40 @@ class FavoriteRepositoryImplTest {
                     assertThat(actual.value.favorited).isEqualTo(expected.favorited)
                     assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
                 }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml", "datasets/yml/given/tags.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `失敗-「articles テーブルに slug に該当する作成済記事が存在しない」の場合は、記事が見つかりませんでした（NotFoundArticleBySlug）が戻り値`() {
+            /**
+             * given:
+             */
+            val favoriteRepository = FavoriteRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             */
+            val actual = favoriteRepository.favorite(Slug.newWithoutValidation("dummy-slug"), UserId(2))
+
+            /**
+             * then:
+             */
+            val expected =
+                FavoriteRepository.FavoriteError.ArticleNotFoundBySlug(Slug.newWithoutValidation("dummy-slug"))
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
             }
         }
     }
