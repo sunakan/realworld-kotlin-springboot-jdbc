@@ -16,6 +16,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.favorite.UnfavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
@@ -114,12 +115,99 @@ class FavoriteControllerTest {
                                 return testCase.useCaseExecuteResult
                             }
                         },
+                        object : UnfavoriteUseCase {},
                     )
 
                     // when
                     val actual = controller.favorite(rawAuthorizationHeader = requestHeader, slug = pathParamSlug)
 
                     // then
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+        }
+    }
+
+    class Unfavorite {
+        private val requestHeader = "dummy-authorize"
+        private val pathParamSlug = "dummy-slug"
+        val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+        )
+
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<UnfavoriteUseCase.Error, Unit>,
+            val expected: ResponseEntity<String>,
+        )
+
+        @TestFactory
+        fun test(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    title = "成功: UnfavoriteUseCase が Unit を返す場合、200 レスポンスを返す",
+                    useCaseExecuteResult = Unit.right(),
+                    expected = ResponseEntity("", HttpStatus.valueOf(200))
+                ),
+                TestCase(
+                    title = "失敗: UnfavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
+                    useCaseExecuteResult = UnfavoriteUseCase.Error.InvalidSlug(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "DummyValidationError because Invalid Slug"
+                                override val key: String get() = "DummyKey"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    title = "失敗: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    useCaseExecuteResult = UnfavoriteUseCase.Error.ArticleNotFoundBySlug(
+                        object : MyError {},
+                        Slug.newWithoutValidation(pathParamSlug)
+                    ).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    title = "失敗: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
+                    useCaseExecuteResult = UnfavoriteUseCase.Error.Unexpected(object : MyError {}).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
+                )
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    /**
+                     * given
+                     */
+                    val controller = FavoriteController(
+                        object : MyAuth {
+                            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                return dummyRegisteredUser.right()
+                            }
+                        },
+                        object : FavoriteUseCase {},
+                        object : UnfavoriteUseCase {
+                            override fun execute(
+                                slug: String?,
+                                currentUser: RegisteredUser
+                            ): Either<UnfavoriteUseCase.Error, Unit> {
+                                return testCase.useCaseExecuteResult
+                            }
+                        },
+                    )
+
+                    /**
+                     * when
+                     */
+                    val actual = controller.unfavorite(rawAuthorizationHeader = requestHeader, slug = pathParamSlug)
+
+                    /**
+                     * then
+                     */
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
